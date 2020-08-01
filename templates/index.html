@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <link rel="stylesheet" href="../static/css/style.css">
+    <!--<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>-->
+    <script src="../static/js/jquery-3.4.1.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+    <script src="https://kit.fontawesome.com/835bb39138.js" crossorigin="anonymous"></script>
+    <script src="../static/dropzone-5.7.0/dist/dropzone.js"></script>
+    <link rel="stylesheet" href="../static/dropzone-5.7.0/dist/dropzone.css">
+    <script src="../static/js/index.js"></script>
+</head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">Navbar</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item active">
+            <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+          </li>
+          <li class="nav-item">
+            <!--<a class="nav-link" href="#">Link</a>-->
+            <button id="upload_but" type="button" class="btn btn-primary">Add</button>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Dropdown
+            </a>
+            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+              <button id="refresh_but" type="button" class="btn btn-primary">Refresh</button>
+              <a class="dropdown-item" href="#">Action</a>
+              <a class="dropdown-item" href="#">Another action</a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="#">Something else here</a>
+            </div>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link disabled" href="#">Disabled</a>
+          </li>
+        </ul>
+        <form class="form-inline my-2 my-lg-0">
+          <input id="search-inp" class="form-control mr-sm-2" placeholder="Search" aria-label="Search">
+          <button id="search-but" class="btn btn-outline-success my-2 my-sm-0">Search</button>
+        </form>
+      </div>
+    </nav>
+    <div id="card_parent" class="row row-cols-1 row-cols-md-4">
+    </div>
+    <i class="fas fa-file"></i>
+    <!-- Upload Modal -->
+    <div class="modal fade" id="uploadModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title" id="uploadModalLabel">Add element</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            </div>
+            <div class="modal-body">
+                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                    <a class="nav-link active" id="tab-web" data-toggle="tab" href="#web-tab" role="tab" aria-controls="web-tab" aria-selected="true">Web</a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="tab-file" data-toggle="tab" href="#file-tab" role="tab" aria-controls="file-tab" aria-selected="false">File</a>
+                    </li>
+                </ul>
+                <div class="tab-content" id="myTabContent">
+                <div class="tab-pane fade show active" id="web-tab" role="tabpanel" aria-labelledby="web-tab">
+                    <label for="url-title-field">Name</label>
+                    <input type="text" class="form-control" id="url-title-field" aria-describedby="basic-addon3">
+                    <br>
+                    <label for="url-field">URL</label>
+                    <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="url-field" aria-describedby="basic-addon3">
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="file-tab" role="tabpanel" aria-labelledby="file-tab">
+                    <label for="file-title-field">Name</label>
+                    <input type="text" class="form-control" id="file-title-field" aria-describedby="basic-addon3">
+                    <br>
+                    <form action="/file-upload" class="dropzone" id="dzUp"></form>
+                </div>
+                </div>
+                <label for="tags-label">Tags</label>
+                <div id="up_tag_form" class="input-group mb-3">
+                    <input type="text" id="tags-label" class="form-control" placeholder="Tags" aria-label="Tags" aria-describedby="button-addon2">
+                    <div class="input-group-append">
+                      <button class="btn btn-outline-secondary" type="button" id="button-addon2">Add</button>
+                    </div>
+                </div>
+                <div id="up_tag_parent">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="submit-elem" class="btn btn-primary">Add element</button>
+            </div>
+        </div>
+        </div>
+    </div>
+    
+    <script>
+        Dropzone.options.dzUp = {
+        autoProcessQueue: false,
+        url: '/file-upload',
+        maxFiles: 1,
+        init: function () {
+            var myDropzone = this;
+    
+            $("#submit-elem").click(function (e) {
+                e.preventDefault();
+                let id = $('.tab-content .active').attr('id');
+                if (id == "web-tab") {
+                    submit_url();
+                }
+                else {
+                    myDropzone.processQueue();
+                }   
+            });
+
+            myDropzone.on('success', function(file, url) {
+                retrieve_elems();
+                myDropzone.removeAllFiles();
+                $('#uploadModal').modal('hide');
+                console.log(url);
+            });
+            myDropzone.on("maxfilesexceeded", function(file) {
+                myDropzone.removeAllFiles();
+                myDropzone.addFile(file);
+            });
+            // add title and tags
+            myDropzone.on('sending', function(file, xhr, formData) {
+                // Append all form inputs to the formData Dropzone will POST
+                // var data2 = $('#frmTarget').serializeArray();
+                let data = {"name": $("#file-title-field").val(), "tags": tags};
+
+                formData.append("name", $("#file-title-field").val());
+                formData.append("tags", tags);
+                /*
+                console.log(data2);
+                console.log(xhr);
+                console.log(formData)
+
+                $.each(data2, function(k, v) {
+                    console.log(k + ": " + v);
+                    formData.append(k, v);
+                });
+                console.log(formData);
+                */
+            });
+
+            }
+        }
+    </script>
+
+    <!-- Element Modal -->
+    <div class="modal fade" id="elemModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title editable" id="elemModalLabel">Modal title</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            </div>
+            <div class="modal-body">
+                <!--Card-->
+                <div class="card mb-3">
+                    <div class="row no-gutters">
+                      <div class="col-md-4">
+                        <img id="elemModalImage" src="" class="card-img" alt="...">
+                      </div>
+                      <div class="col-md-8">
+                        <div class="card-body">
+                            <h5><a id="elemModalTitle" target="_blank" class="card-title editable">Card title</a></h5>
+                            <p id="elemText" class="card-text editable">This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
+                            <p id="elemDate" class="card-text"><small class="text-muted">Last updated 3 mins ago</small></p>
+                            <label for="tags-label">Tags</label>
+                            <div id="view_tag_form" class="input-group mb-3">
+                                <input type="text" id="tags-label" class="form-control" placeholder="Tags" aria-label="Tags" aria-describedby="button-addon2">
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-secondary" type="button" id="button-addon2">Add</button>
+                                </div>
+                            </div>
+                            <div id="view_tag_parent">
+                            </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+            </div>
+            <div class="modal-footer">
+            <button type="button" class="btn btn-danger" id="del_but">Delete</button>
+            <button type="button" class="btn btn-secondary" id="edit_but">Edit</button>
+            <button type="button" class="btn btn-primary" id="save_but">Save changes</button>
+            </div>
+        </div>
+        </div>
+    </div>
+  </body>
+</html>

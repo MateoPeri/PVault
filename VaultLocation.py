@@ -76,7 +76,12 @@ class WebLocation(VaultLocation):
         s = self.location.rstrip('/')
         res = requests.get(s + '.json', headers=headers)
         jn = json.loads(res.content)
-        data = jn[0]['data2']['children'][0]['data2']
+        try:
+            data = jn[0]['data']['children'][0]['data']
+        except KeyError as e:
+            print(e)
+            print('Key data not found, trying data 2...')
+            data = jn[0]['data2']['children'][0]['data2']
         title = data['title']
         desc = data['subreddit_name_prefixed']
         image = data['url'] if check_url_type(data['url'], 'image') else data['thumbnail']

@@ -90,7 +90,7 @@ class WebLocation(VaultLocation):
         c_type = response.headers['content-type']
         # some content types are in the form 'text/hmtl; charset=UTF-8'
         # we only want 'text/html'
-        self.mime = c_type.split()[0].rstrip(';')
+        self.mime = c_type.split(';')[0]
         prev = self.get_preview()
         self.name = prev[0]
         # TODO: fails when url is a direct image (

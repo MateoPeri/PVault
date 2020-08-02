@@ -1,4 +1,5 @@
 import json
+import mimetypes
 import os
 import os.path
 import urllib.request
@@ -23,84 +24,38 @@ def from_loc(location, loc_type):
 class VaultLocation:
     loc_type = 'None'
     name = ''
-    uuid = ''
+    mime = ''
+    preview = ()
 
-    def __init__(self, location):
+    def __init__(self, location, fetch=True, uuid=None):
         self.location = location
+        self.uuid = uuid
+        if fetch:
+            self.get_content()  # FIXME: ideally, this should only be called when necesary, not on creation
 
     def to_dict(self):
-        di = {'name': self.name, 'uuid': self.uuid, 'type': self.loc_type, 'location': self.location}
-        return di
+        prev = self.get_preview()
+        return {'name': self.name, 'uuid': self.uuid,
+                'loc_type': self.loc_type, 'location': self.location,
+                'preview': {
+                    'desc': prev[1],
+                    'image': prev[2]
+                }}
+
+    def get_content(self):
+        pass
 
     def get_preview(self):
         return self.name, '', PVault.default_preview
 
 
-class FileLocation(VaultLocation):
-    loc_type = 'File'
-
-    def __init__(self, path):
-        super().__init__(path)
-
-        mime = magic.Magic(mime=True)
-        ft = mime.from_file(self.location)
-        # ft, _ = get_file_type(self.location)
-        self.mime = ft.split('/')[0]
-        prev = self.get_preview()
-        self.preview = prev[1:]
-
-    def get_preview(self):
-        if self.mime == 'image':
-            return self.name, '', self.location
-        try:
-            pv_mgr = PreviewManager(PVault.cache_path, create_folder=True)
-            return self.name, '', pv_mgr.get_jpeg_preview(self.location)
-        except preview_generator.exception.UnsupportedMimeType:
-            print('Unsuported mime type!', self.location)
-        return super().get_preview()
-
-    '''
-    def retrieve_element(self):
-        with open(self.location, 'rb') as f:
-            return f
-    '''
-
-
-def get_file_type(path):
-    kind = filetype.guess(path)
-    if kind is None:
-        return 'doc', os.path.splitext(path)[1]
-    return kind.mime, kind.extension
-
-
-def check_url_type(image_url, t):
-    r = requests.head(image_url)
-    return t in r.headers.get("content-type", '')
-
-
 class WebLocation(VaultLocation):
     loc_type = 'Web'
+    ext = ''  # REMOVE
+    filename = ''  # REMOVE
 
-    def __init__(self, url, archive=False, archive_dir=None):
-        self.location = url
-        url2 = urllib.parse.urlparse(self.location)
-        # self.name = os.path.basename(url2.path)
-        prev = self.get_preview()
-        self.name = prev[0]
-        self.preview = prev[1:]
-
-        # usar mime types (https://stackoverflow.com/questions/4776924/how-to-safely-get-the-file-extension-from-a-url)        
-        ext = os.path.splitext(url2.path)[1]
-        self.filename = self.name + ext
-
-        self.archive = archive
-        self.archive_dir = archive_dir
-        self.arch_loc = None
-
-    def to_dict(self):
-        di = super().to_dict()
-        di['archived'] = self.archive
-        return di
+    def __init__(self, url, fetch=True, uuid=None):
+        super().__init__(url, fetch, uuid)
 
     def get_preview(self):
         headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:39.0) Gecko/20100101 Firefox/39.0'}
@@ -127,26 +82,73 @@ class WebLocation(VaultLocation):
         image = data['url'] if check_url_type(data['url'], 'image') else data['thumbnail']
         return title, desc, image
 
-    '''
-    def retrieve_element(self):
-        if self.arch_loc:
-            if self.archive:
-                print('data2 found in archive!!!')
-                return self.arch_loc.retrieve_element()
-            self.arch_loc = None  # and delete file!!!
+    def get_element(self):
+        return requests.get(self.location)
 
-        print('requesting data2...')
-        data2 = requests.get(self.location)
-        if self.archive:
-            # save file at archive dir, then add it as a file location
-            path = PVault.archive_dir + self.filename
-            self.arch_loc = FileLocation(path)
-        else:
-            path = PVault.temp_dir + self.filename
+    def get_content(self):
+        response = requests.get(self.location)
+        c_type = response.headers['content-type']
+        # some content types are in the form 'text/hmtl; charset=UTF-8'
+        # we only want 'text/html'
+        self.mime = c_type.split()[0].rstrip(';')
+        prev = self.get_preview()
+        self.name = prev[0]
+        # TODO: fails when url is a direct image (
+        # https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Oryctolagus_cuniculus_Rcdo.jpg/440px
+        # -Oryctolagus_cuniculus_Rcdo.jpg)
+        self.preview = prev[1:]
 
-        with open(path, 'wb') as f:
-            f.write(data2.content)
-            f.close()
 
-        return path
-    '''
+class FileLocation(VaultLocation):
+    loc_type = 'File'
+
+    def __init__(self, path, fetch=True, uuid=None):
+        super().__init__(path, fetch, uuid)
+
+    def get_preview(self):
+        if self.mime == 'image':
+            return self.name, '', self.location
+        try:
+            pv_mgr = PreviewManager(PVault.cache_path, create_folder=True)
+            return self.name, '', pv_mgr.get_jpeg_preview(self.location)
+        except preview_generator.exception.UnsupportedMimeType:
+            print('Unsuported mime type!', self.location)
+        return super().get_preview()
+
+    def get_content(self):
+        """
+        Refresh the location.
+        """
+        mime = magic.Magic(mime=True)
+        ft = mime.from_file(self.location)
+        # ft, _ = get_file_type(self.location)
+        self.mime = ft.split('/')[0]
+        prev = self.get_preview()
+        self.preview = prev[1:]
+
+
+def archive_from_web(webloc: WebLocation, fetch=True):
+    """
+    Create a file location from a web location, for archiving purposes.
+    """
+    data = webloc.get_element()
+    ext = mimetypes.guess_extension(webloc.mime)
+    p = os.path.join(PVault.upload_dir, webloc.uuid + ext)
+    with open(p, 'wb') as f:
+        f.write(data.content)
+        f.close()
+
+    fl = FileLocation(p, fetch=fetch, uuid=webloc.uuid)
+    return fl
+
+
+def get_file_type(path):
+    kind = filetype.guess(path)
+    if kind is None:
+        return 'doc', os.path.splitext(path)[1]
+    return kind.mime, kind.extension
+
+
+def check_url_type(image_url, t):
+    r = requests.head(image_url)
+    return t in r.headers.get("content-type", '')

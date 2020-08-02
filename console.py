@@ -5,6 +5,7 @@ import re
 from flask import Flask, request, render_template, send_file, redirect, url_for
 from tinydb import Query
 
+import VaultLocation
 from VaultLocation import FileLocation, WebLocation
 from pvault import PVault, VaultElement, remove_diacritics
 
@@ -86,7 +87,6 @@ def reload_all():
 
 @app.errorhandler(404)
 def page_not_found(e):
-    print(e)
     return render_template('404.html'), 404
 
 
@@ -116,9 +116,15 @@ def del_elem():
 @app.route('/add_url', methods=['POST'])
 def add_url():
     di = request.get_json(force=True)
-    url = 'https://' + di["elem"].lstrip('https').lstrip('://')
-    print('url:', url)
-    pv.add_element(VaultElement(WebLocation(url), name=di["name"], tags=di["tags"]))
+    url = 'https://' + di['elem'].lstrip('https').lstrip('://')
+
+    uuid = pv.get_uuid()
+    webloc = WebLocation(url, uuid=uuid)
+    arch = None
+    if di['archive']:
+        arch = VaultLocation.archive_from_web(webloc, fetch=False)
+
+    pv.add_element(VaultElement(webloc, uuid=uuid, arch_loc=arch, name=di["name"], tags=di["tags"]))
     return 'Sucess!'
 
 
@@ -135,7 +141,6 @@ def save_file(file, data):
 @app.route('/file-upload', methods=['POST'])
 def upload_file():
     ids = []
-    # print(len(request.files.getlist('file')))
     data = dict(request.form)
     data['tags'] = data['tags'].split(',')
     print(data)

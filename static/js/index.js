@@ -2,21 +2,21 @@ const card = `
 <div class="col mb-4">
     <div class="card h-100">
         <div class="embed-responsive embed-responsive-16by9">
-            <img id="card_img" src="..." class="card-img-top embed-responsive-item" alt="...">
+            <img id="card_img" src="" class="card-img-top embed-responsive-item" alt="...">
         </div>
         <div class="card-body">
             <h5 class="card-title"><a id="card_title" target="_blank">Card title</a></h5>
-            <p id="card_desc" class="card-text">This is a longer card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
+            <p id="card_desc" class="card-text"></p>
         </div>
     </div>
 </div>
 `;
 
-var defElemModal;
-var urlParams;
+let defElemModal;
+let urlParams;
 
+let tags;
 $(document).ready(function() {
-    // 
     console.log('ready!');
     urlParams = new URLSearchParams(window.location.search);
 
@@ -37,27 +37,29 @@ $(document).ready(function() {
         remove_elem();
     });
 
-    $("#up_tag_form").find('.btn').on("click", function() {
-        let v = $("#up_tag_form").find('#tags-label').val().trim();
-        $("#up_tag_form").find('#tags-label').val("");
-        $("#up_tag_form").find('#tags-label').text("");
+    let up_tag = $("#up_tag_form");
+    up_tag.find('.btn').on("click", function() {
+        let v = up_tag.find('#tags-label').val().trim();
+        up_tag.find('#tags-label').val("");
+        up_tag.find('#tags-label').text("");
         let p = $("#up_tag_parent");
         add_tag_to_parent(v, p);
     });
-    $("#view_tag_form").find('.btn').on("click", function() {
-        let v = $("#view_tag_form").find('#tags-label').val().trim();
-        $("#view_tag_form").find('#tags-label').val("");
+    let view_tag = $("#view_tag_form");
+    view_tag.find('.btn').on("click", function() {
+        let v = view_tag.find('#tags-label').val().trim();
+        view_tag.find('#tags-label').val("");
         let p = $("#view_tag_parent");
         add_tag_to_parent(v, p);
     });
-    $("#up_tag_form").find('#tags-label').keyup(function(event) {
+    up_tag.find('#tags-label').keyup(function(event) {
         if (event.keyCode === 13) {
-            $("#up_tag_form").find('.btn').click();
+            up_tag.find('.btn').click();
         }
     })
-    $("#view_tag_form").find('#tags-label').keyup(function(event) {
+    view_tag.find('#tags-label').keyup(function(event) {
         if (event.keyCode === 13) {
-            $("#view_tag_form").find('.btn').click();
+            view_tag.find('.btn').click();
         }
     });
 
@@ -70,10 +72,11 @@ $(document).ready(function() {
 
     $("#search-but").on("click", function (e) {
         e.preventDefault();
-        search_by($("#search-inp").val());
+        search_by(sch_inp.val());
     });
-    $("#search-inp").val(urlParams.get('q'));
-    $("#search-inp").keyup(function(event) {
+    let sch_inp = $("#search-inp");
+    sch_inp.val(urlParams.get('q'));
+    sch_inp.keyup(function(event) {
         if (event.keyCode === 13) {
             $("#search-but").click();
         }
@@ -89,28 +92,19 @@ function clearForm($form)
     $form.find(':checkbox, :radio').prop('checked', false);
 }
 
-var newCard;
-var elems, selected_elem;
-var tag = `<a href="#" class="badge badge-primary">Test</a>`;
-var tags = [];
-var isEditing;
+let newCard;
+let elems, selected_elem;
+const tagHTML = `<a href="#" class="badge badge-primary">Test</a>`;
+
+let isEditing;
 
 function toggle_edit() {
     let $div=$('#elemModal').find('.editable');
     let edit = $div.prop('contenteditable');
-    isEditing = edit != 'true';
+    isEditing = edit !== 'true';
 
     $("#edit_but").text(isEditing ? 'Done' : 'Edit');
-    $('#elemModalTitle').text(isEditing ? selected_elem["location"] : selected_elem["name"]);
-
-    /*
-    for (let index = 0; index < array.length; index++) {
-        const element = array[index];
-        newTag.on("click", {
-            t: val
-        }, remove_elem );
-    }
-    */
+    $('#elemModalTitle').text(isEditing ? selected_elem["location"]["location"] : selected_elem["name"]);
 
     $div.prop('contenteditable', isEditing);
 }
@@ -119,7 +113,7 @@ function list_tags(tgs, p) {
     p.html("");
     for (let i = 0; i < tgs.length; i++) {
         const e = tgs[i];
-        let newTag = $(tag);
+        let newTag = $(tagHTML);
         newTag.text(e);
         // tag.attr("href")
         newTag.on("click", {
@@ -133,7 +127,7 @@ function list_tags(tgs, p) {
 }
 
 function add_tag_to_parent(val, parent) {
-    let newTag = $(tag);
+    let newTag = $(tagHTML);
     if (tags.includes(val))
         return
     
@@ -157,7 +151,7 @@ function tag_clicked(event) {
 }
 
 function remove_tag(event) {
-    var index = tags.indexOf(event.data.t);
+    let index = tags.indexOf(event.data.t);
     tags.splice(index, 1);
 
     list_tags(tags, event.data.p);
@@ -165,32 +159,30 @@ function remove_tag(event) {
 
 function filter_by_tag(event) {
     console.log("Filtering by " + event.data.t);
-    let newUri = updateUrlParameter(document.location.search,'t', event.data.t); // add
-    document.location.search = newUri;
+    document.location.search = updateUrlParameter(document.location.search, 't', event.data.t);
 }
 
 function search_by(query) {
-    let newUri = updateUrlParameter(document.location.search,'q', query);
-    document.location.search = newUri;
+    document.location.search = updateUrlParameter(document.location.search, 'q', query);
 }
 
 function save_changes() {
     let url = '/edit';
     let elem = selected_elem;
     elem["name"] = $('#elemModalLabel').text();
-    elem["preview"]["image"] = $('#elemModalImage').attr("src");
-    elem["location"] = $('#elemModalTitle').attr("href");
-    elem["preview"]["desc"] = $('#elemText').text();
+    elem["location"]["preview"]["image"] = $('#elemModalImage').attr("src");
+    elem["location"]["location"] = $('#elemModalTitle').attr("href");
+    elem["location"]["preview"]["desc"] = $('#elemText').text();
     elem["tags"] = tags;
     tags = []
 
     let data = JSON.stringify(elem);
-    console.log(data);
+    // console.log(data);
     $.ajax({
         type: "POST",
         url: url,
         data: data, // element to edit
-        success: function(response)
+        success: function()
         {
             $('#elemModal').modal('hide');
             retrieve_elems();
@@ -222,10 +214,9 @@ function retrieve_elems() {
                 const e = elems[i];
                 newCard = $(card);
                 $(newCard).find('#card_title').text(e["name"]);
-                $(newCard).find('#card_desc').text(e["preview"]["desc"]);
-                $(newCard).find('#card_img').attr("src", e["preview"]["image"]);
-                $(newCard).find('#card_title').attr("href", e["location"]);
-                let url = 'e/' + e["uuid"];
+                $(newCard).find('#card_desc').text(e["location"]["preview"]["desc"]);
+                $(newCard).find('#card_img').attr("src", e["location"]["preview"]["image"]);
+                $(newCard).find('#card_title').attr("href", e["location"]["location"]);
                 $(newCard).find('#card_img').on("click", {
                     el: e
                   }, show_element );
@@ -243,12 +234,13 @@ function retrieve_elems() {
 function remove_elem() {
     let url = '/del';
     let data = JSON.stringify(selected_elem["uuid"]);
+    console.log(data)
     console.log(data);
     $.ajax({
         type: "POST",
         url: url,
         data: data, // element to remove
-        success: function(response)
+        success: function()
         {
             $('#elemModal').modal('hide');
             retrieve_elems();
@@ -264,15 +256,16 @@ function remove_elem() {
 function submit_url() {
     let url = '/add_url';
     let data = {"elem": $("#url-field").val(),
-                "name": $("#url-title-field").val(), "tags": tags}
+                "name": $("#url-title-field").val(),
+                "tags": tags, "archive": $("#archive-check").is(":checked")}
     tags = []
     data = JSON.stringify(data);
-    console.log(data);
+    // console.log(data);
     $.ajax({
         type: "POST",
         url: url,
         data: data, // element to add
-        success: function(response)
+        success: function()
         {
             $("#url-field").val("");
             $("#url-title-field").val("");
@@ -289,23 +282,22 @@ function submit_url() {
 
 function show_element(event) {
     selected_elem = event.data.el;
-    console.log(selected_elem["name"]);
+    // console.log(selected_elem["name"]);
     // reset modal
-    $('#elemModal').replaceWith(defElemModal.clone(true, true));
-    //$('#elemModal').html($('#elemModal').data2('old-state'));
+    let elem_modal = $('#elemModal');
+    // TODO: ??? elem_modal.replaceWith(defElemModal.clone(true, true));
 
-    $('#elemModal').modal('show');
+    elem_modal.modal('show');
     $('#elemModalLabel').text(selected_elem["name"]);
-    $('#elemModalImage').attr("src", selected_elem["preview"]["image"]);
-    $('#elemModalTitle').attr("href", selected_elem["location"]).text(selected_elem["name"]);
-    $('#elemText').text(selected_elem["preview"]["desc"]);
-    // $('#elemText').attr("src", selected_elem["preview"]["image"]);
+    $('#elemModalImage').attr("src", selected_elem["location"]["preview"]["image"]);
+    $('#elemModalTitle').attr("href", selected_elem["location"]["location"]).text(selected_elem["name"]);
+    $('#elemText').text(selected_elem["location"]["preview"]["desc"]);
 
     tags = selected_elem["tags"];
     list_tags(tags, $("#view_tag_parent"));
 
     isEditing = false;
-    $('#elemModal').find('.editable').prop('contenteditable', isEditing);
+    elem_modal.find('.editable').prop('contenteditable', isEditing);
 }
 
 // https://gist.github.com/niyazpk/f8ac616f181f6042d1e0#gistcomment-1743025

@@ -84,9 +84,14 @@ class PVault:
             self.save_settings()
 
     def add_element(self, elem):
-        elem.uuid = shortuuid.uuid()
+        elem.set_uuid(self.get_uuid())
         self.elements.insert(elem.to_dict())
+        elem.location.get_content()
         self.locations.insert(elem.location.to_dict())
+        if elem.arch_loc:
+            elem.arch_loc.get_content()
+            self.locations.insert(elem.arch_loc.to_dict())
+
         return elem.uuid
 
     def clear_cache(self):
@@ -106,36 +111,40 @@ class PVault:
         for ne in new_elems:
             self.add_element(ne)
 
+    def get_uuid(self):
+        # maybe check if uuid exists (rare)
+        return shortuuid.uuid()
+
 
 class VaultElement:
-    uuid = None
-
-    def __init__(self, location, name=None, tags=None):
+    def __init__(self, location, arch_loc=None, uuid=None, name=None, tags=None):
         self.location = location
+        self.arch_loc = arch_loc
+        self.uuid = uuid
         self.name = self.location.name if name is None else name
         self.index_name = remove_diacritics(self.name)
         self.tags = [] if tags is None else tags
         self.v_class = self.location.loc_type
         self.preview = None
 
-    def get_content(self):
-        return self.location.retrieve_element()
-
     def edit(self, name=None, tags=None, v_class=None):
         self.name = name if name else self.name
         self.tags = tags if tags else self.tags
         self.v_class = v_class if v_class else self.v_class
 
+    def set_uuid(self, u):
+        if self.uuid is None:
+            self.uuid = u
+            self.location.uuid = u
+            self.arch_loc.uuid = u
+
     def to_dict(self):
-        prev = self.location.preview
+        arch = self.arch_loc.to_dict() if self.arch_loc else {}
         di = {'name': self.name, 'index_name': self.index_name, 'uuid': self.uuid,
-              'tags': self.tags, 'v_class': self.v_class, 'loc_type': self.location.loc_type,
-              'location': self.location.location, 'preview': {
-                'desc': prev[0],
-                'image': prev[1]
-              }}
+              'tags': self.tags, 'v_class': self.v_class,
+              'location': self.location.to_dict(), 'arch_loc': arch}
         if self.location.loc_type == 'Web':
-            di['archived'] = self.location.archive
+            di['archived'] = self.arch_loc is not None
         return di
 
     def to_json(self, save=False):

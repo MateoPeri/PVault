@@ -113,6 +113,7 @@ class FileLocation(VaultLocation):
             return self.name, '', pv_mgr.get_jpeg_preview(self.location)
         except preview_generator.exception.UnsupportedMimeType:
             print('Unsuported mime type!', self.location)
+        print('returning', super().get_preview())
         return super().get_preview()
 
     def get_content(self):

@@ -12,7 +12,9 @@ RUN apt-get update && apt-get install -y \
     qpdf \
     libimage-exiftool-perl \
     ufraw-batch \
-    ffmpeg
+    ffmpeg \
+    scribus \
+    libreoffice
 RUN pip install -r requirements.txt
 ENTRYPOINT ["python"]
 CMD ["console.py"]

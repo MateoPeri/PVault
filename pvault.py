@@ -136,7 +136,8 @@ class VaultElement:
         if self.uuid is None:
             self.uuid = u
             self.location.uuid = u
-            self.arch_loc.uuid = u
+            if self.arch_loc:
+                self.arch_loc.uuid = u
 
     def to_dict(self):
         arch = self.arch_loc.to_dict() if self.arch_loc else {}
